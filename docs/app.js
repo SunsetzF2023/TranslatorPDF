@@ -177,19 +177,39 @@ const providers = {
     return cleanup(payload.responseData.translatedText);
   },
   async google(text, target) {
+    // `translate_a/t` (the Chrome dictionary client) is the only Google endpoint
+    // that sends `Access-Control-Allow-Origin: *`, so it is usable from a page.
     const url =
-      "https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&dt=t&tl=" +
+      "https://translate.googleapis.com/translate_a/t?client=dict-chrome-ex&sl=en&tl=" +
       target +
       "&q=" +
       encodeURIComponent(text);
     const response = await fetch(url);
     if (!response.ok) throw new Error("Google HTTP " + response.status);
     const payload = await response.json();
-    return payload[0].map((segment) => segment[0]).join("");
+    const flat = Array.isArray(payload) ? payload.flat(Infinity) : [payload];
+    return cleanup(flat.filter((part) => typeof part === "string").join(""));
   },
 };
 
 const CHUNK_LIMIT = { mymemory: 480, google: 1500 };
+const RETRIES = 3;
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+async function callProvider(name, text, target) {
+  let lastError;
+  for (let attempt = 0; attempt < RETRIES; attempt += 1) {
+    if (stopped) throw new Error("已停止");
+    try {
+      return await providers[name](text, target);
+    } catch (error) {
+      lastError = error;
+      await sleep(600 * 2 ** attempt + Math.random() * 400);
+    }
+  }
+  throw lastError;
+}
 
 async function translateParagraph(text, target, preferred) {
   const cached = cacheGet(target, text);
@@ -200,7 +220,7 @@ async function translateParagraph(text, target, preferred) {
     try {
       const parts = [];
       for (const chunk of splitChunks(text, CHUNK_LIMIT[name])) {
-        parts.push(await providers[name](chunk, target));
+        parts.push(await callProvider(name, chunk, target));
       }
       const result = parts.join(" ").trim();
       if (result) {
@@ -250,7 +270,7 @@ async function runTranslation() {
     }
   };
 
-  await Promise.all([worker(), worker(), worker()]);
+  await Promise.all([worker(), worker()]);
   ui.translate.disabled = false;
   ui.stop.disabled = true;
   const ok = indices.filter((i) => translations[i]).length;
