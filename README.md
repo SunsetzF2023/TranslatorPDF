@@ -3,7 +3,23 @@
 把英文 PDF 变成中英对照阅读：左边原文、右边中文，逐段对齐，可导出双语 PDF / HTML。
 完全免费，不需要任何 API key（使用 Google / Bing / MyMemory 的公开网页接口）。
 
-## 安装
+两种用法：**网页版**（GitHub Pages，打开就能用，零安装）和**桌面版**（Python，可导出双语 PDF）。
+
+## 网页版（GitHub Pages）
+
+`docs/` 是一个纯静态页面，没有后端：PDF 在浏览器里用 pdf.js 解析，文件不上传，只有段落文本会发给翻译接口。
+
+开启方法：仓库 Settings → Pages → Source 选 `Deploy from a branch`，分支 `main`、目录 `/docs`，保存后访问 `https://<用户名>.github.io/<仓库名>/`。
+
+本地预览：
+
+```bash
+python -m http.server 8000 --directory docs   # 打开 http://localhost:8000
+```
+
+功能：选择 / 拖入 PDF、页码范围、引擎（MyMemory / Google）、简繁体、停止、浏览器打印或“存为 PDF”、下载中英对照 HTML；译文缓存在浏览器 localStorage。
+
+## 安装（桌面版）
 
 需要 Python 3.10+。
 
@@ -12,7 +28,7 @@ pip install -r requirements.txt
 # Linux 上如果提示没有 tkinter：sudo apt install python3-tk
 ```
 
-## 使用
+## 使用（桌面版）
 
 桌面界面：
 
@@ -46,3 +62,4 @@ python app.py paper.pdf -o out.html --provider bing --first-page 1 --last-page 1
 | `pdfbt/exporter.py` | 导出双语 PDF / HTML |
 | `pdfbt/gui.py` | tkinter 界面（左右分栏、同步滚动） |
 | `pdfbt/cli.py` | 命令行模式 |
+| `docs/` | GitHub Pages 网页版（pdf.js + fetch，无后端） |

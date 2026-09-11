@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PDF 中英对照翻译</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <h1>PDF 中英对照翻译</h1>
+  <p class="sub">浏览器里解析英文 PDF，逐段对照显示中文。文件不上传，只有段落文本会发给翻译接口。</p>
+</header>
+
+<section class="toolbar">
+  <label class="file-button">
+    选择 PDF
+    <input type="file" id="file" accept="application/pdf" hidden>
+  </label>
+  <span id="filename" class="filename">未选择文件</span>
+
+  <label>页码
+    <input type="number" id="firstPage" min="1" value="1">
+    到
+    <input type="number" id="lastPage" min="1">
+  </label>
+
+  <label>引擎
+    <select id="provider">
+      <option value="mymemory">MyMemory（最稳定）</option>
+      <option value="google">Google（可能被限流）</option>
+    </select>
+  </label>
+
+  <label>译文
+    <select id="target">
+      <option value="zh-CN">简体中文</option>
+      <option value="zh-TW">繁體中文</option>
+    </select>
+  </label>
+
+  <button id="translate" disabled>开始翻译</button>
+  <button id="stop" disabled>停止</button>
+  <button id="print" disabled>打印 / 存为 PDF</button>
+  <button id="download" disabled>下载 HTML</button>
+</section>
+
+<section class="statusbar">
+  <progress id="progress" value="0" max="1"></progress>
+  <span id="status">拖一个英文 PDF 到页面上，或点“选择 PDF”。</span>
+</section>
+
+<main id="output" class="output"></main>
+
+<div id="dropzone" class="dropzone">松手即可载入 PDF</div>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>

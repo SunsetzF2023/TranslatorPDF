@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import html
 import json
 import re
 import threading
@@ -18,6 +19,7 @@ USER_AGENT = (
     "(KHTML, like Gecko) Chrome/124.0 Safari/537.36"
 )
 _SENTENCE_SPLIT = re.compile(r"(?<=[.!?;:])\s+")
+_TAG = re.compile(r"</?g\b[^>]*>")
 
 
 class TranslationError(RuntimeError):
@@ -102,10 +104,10 @@ class BingProvider(Provider):
         with self._lock:
             if self._auth and time.time() - self._auth_time < 480:
                 return self._auth
-            html = self.session.get(self.PAGE, timeout=20).text
-            ig = re.search(r'IG:"([^"]+)"', html)
-            iid = re.search(r'data-iid="([^"]+)"', html)
-            helper = re.search(r"params_AbusePreventionHelper\s*=\s*(\[.*?\])", html)
+            page = self.session.get(self.PAGE, timeout=20).text
+            ig = re.search(r'IG:"([^"]+)"', page)
+            iid = re.search(r'data-iid="([^"]+)"', page)
+            helper = re.search(r"params_AbusePreventionHelper\s*=\s*(\[.*?\])", page)
             if not (ig and iid and helper):
                 raise TranslationError("bing: could not read page token")
             key, token, _ = json.loads(helper.group(1))
@@ -154,7 +156,8 @@ class MyMemoryProvider(Provider):
         payload = response.json()
         if payload.get("responseStatus") not in (200, "200"):
             raise TranslationError(f"mymemory: {payload.get('responseDetails')}")
-        return payload["responseData"]["translatedText"]
+        text = payload["responseData"]["translatedText"]
+        return html.unescape(_TAG.sub("", text))
 
 
 PROVIDERS: dict[str, type[Provider]] = {
