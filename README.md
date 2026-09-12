@@ -17,7 +17,7 @@
 python -m http.server 8000 --directory docs   # 打开 http://localhost:8000
 ```
 
-功能：选择 / 拖入 PDF、页码范围、引擎（MyMemory / Google）、简繁体、停止、浏览器打印或“存为 PDF”、下载中英对照 HTML；译文缓存在浏览器 localStorage。
+功能：选择 / 拖入 PDF、页码范围、引擎（Google / MyMemory）、简繁体、停止、浏览器打印或“存为 PDF”、下载中英对照 HTML；译文缓存在浏览器 localStorage。
 
 ## 安装（桌面版）
 
@@ -47,7 +47,8 @@ python app.py paper.pdf -o out.html --provider bing --first-page 1 --last-page 1
 
 ## 说明
 
-- **引擎**：`google`（默认）、`bing`、`mymemory`。都是免费公开接口，没有官方 SLA；某个引擎被限流时会自动切换到下一个。数据中心 / 云服务器 IP 经常被 Google（HTTP 429）和 Bing（HTTP 401）拒绝，本机网络一般正常；开发环境里只有 `mymemory` 实测通过。
+- **引擎**：`google`（默认，用 `translate_a/t` —— Chrome 词典的接口，带 `Access-Control-Allow-Origin: *`，所以网页版也能用）、`bing`（桌面版专用，本开发环境返回 HTTP 401）、`mymemory`（有每日额度，频繁调用会 HTTP 429）。都是免费公开接口，没有官方 SLA；失败会重试并自动切换到另一个引擎。
+- **重试**：网页版里已翻译的段落会缓存，再点一次“开始翻译”只会重试失败的段落。
 - **缓存**：译文按段落哈希存在 `~/.pdf_bilingual_translator/cache.sqlite3`，重复翻译同一文档不再消耗网络。
 - **排版**：按 PDF 文本块切段，自动合并跨行断词和跨块的半句。扫描件（图片型 PDF）没有文字层，需要先 OCR。
 - **导出 PDF** 使用 PyMuPDF 内置中日韩字体（简体 `china-s`，繁体 `china-t`），不依赖系统字体。

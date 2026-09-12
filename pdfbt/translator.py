@@ -48,6 +48,14 @@ def _split_chunks(text: str, limit: int) -> list[str]:
     return [c for c in chunks if c]
 
 
+def _flatten_strings(payload: object) -> list[str]:
+    if isinstance(payload, str):
+        return [payload]
+    if isinstance(payload, list):
+        return [s for item in payload for s in _flatten_strings(item)]
+    return []
+
+
 class Provider:
     name = "provider"
     char_limit = 1000
@@ -68,21 +76,22 @@ class Provider:
 
 
 class GoogleProvider(Provider):
-    """Unofficial `translate_a/single` endpoint used by the Google Translate web widget."""
+    """Unofficial `translate_a/t` endpoint used by the Chrome dictionary client."""
 
     name = "google"
-    char_limit = 1800
-    URL = "https://translate.googleapis.com/translate_a/single"
+    char_limit = 1500
+    URL = "https://translate.googleapis.com/translate_a/t"
 
     def translate_chunk(self, text: str, source: str, target: str) -> str:
-        params = {"client": "gtx", "sl": source, "tl": target, "dt": "t"}
-        response = self.session.post(self.URL, params=params, data={"q": text}, timeout=20)
+        params = {"client": "dict-chrome-ex", "sl": source, "tl": target, "q": text}
+        response = self.session.get(self.URL, params=params, timeout=20)
         if response.status_code != 200:
             raise TranslationError(f"google HTTP {response.status_code}")
         payload = response.json()
-        if not payload or not payload[0]:
+        parts = _flatten_strings(payload)
+        if not parts:
             raise TranslationError("google: empty response")
-        return "".join(seg[0] for seg in payload[0] if seg and seg[0])
+        return "".join(parts)
 
 
 class BingProvider(Provider):
